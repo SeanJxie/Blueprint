@@ -63,7 +63,8 @@ def snap_to_grid(cell_size, mPos):
 
 
 def distance(a, b):
-    return ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
+    # pixel coordinates must be integers
+    return math.ceil(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
 
 
 def draw_all_shapes(lst):
@@ -154,7 +155,7 @@ def main():
 
                 # Increase and decrease cell size
                 elif event.key == pg.K_UP and grid_gap_size < math.gcd(*DISPLAY_SIZE): # Do not increase cell size larger than max
-                    grid_gap_size *= 2
+                    grid_gap_size *= 2  # Scaling by 2 causes some element-grid offset. Fix.
                 elif event.key == pg.K_DOWN:
                     grid_gap_size //= 2
 
