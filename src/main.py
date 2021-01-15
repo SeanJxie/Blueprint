@@ -17,20 +17,20 @@ MAINSURFACE    = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 DEFAULT_FONT   = pg.font.SysFont("ariel", 30)
 MAX_FRAME_RATE = 60
 
-BLUEPRINT_BLUE = (0,   20 , 132)
+BLUEPRINT_BLUE = (0  , 20 , 132)
 WHITE          = (255, 255, 255)
 GRAY           = (100, 100, 100)
 RED            = (255, 0  , 0  )
-GREEN          = (0,   255, 0  )
+GREEN          = (0  , 255, 0  )
 BLACK          = (0  , 0  , 0  )
 
 CURSOR_RAD        = 10
+CURSOR_WIDTH      = 2
 DRAW_LINE_WIDTH   = 2
 DRAW_CIRCLE_WIDTH = 2
 
 E_TYPE_LINE   = 0
 E_TYPE_CIRCLE = 1
-
 # --- End constants ---
 
 # --- Start functions ---
@@ -42,7 +42,7 @@ def draw_base_grid(gap_size):
 
 
 def draw_cursor(mPos):
-    pg.draw.circle(MAINSURFACE, RED, mPos, 10)
+    pg.draw.circle(MAINSURFACE, RED, mPos, CURSOR_RAD, CURSOR_WIDTH)
 
 
 def snap_to_grid(mPos):
@@ -139,8 +139,12 @@ def main():
 
                         elif len(element) == 1:            # User has placed second point
                             element.append(mousePos)       # Add point to element
-                            element.append(E_TYPE_LINE) # Add element type
-                            draw_list.append(element)      # Add element to draw list
+                            element.append(E_TYPE_LINE)    # Add element type
+
+                            # Check if element already exists.
+                            if element not in draw_list:
+                                draw_list.append(element)  # Add element to draw list
+
                             preview = False                # Exit preview
                             element = []                   # Reset element
 
@@ -156,7 +160,8 @@ def main():
                         elif len(element) == 1:
                             element.append(distance(mousePos, element[0]))
                             element.append(E_TYPE_CIRCLE)
-                            draw_list.append(element)
+                            if element not in draw_list:
+                                draw_list.append(element)
                             preview = False
                             element = []
                         
