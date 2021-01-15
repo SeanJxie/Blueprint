@@ -9,6 +9,7 @@ import util
 A shape constructor
 
 TODO: Navigation
+      Hide grid
 
 """
 
@@ -33,8 +34,10 @@ RED            = (255, 0  , 0  )
 GREEN          = (0  , 255, 0  )
 BLACK          = (0  , 0  , 0  )
 
-CURSOR_RAD        = 10
-CURSOR_WIDTH      = 2
+CURSOR_RAD          = 10
+CURSOR_WIDTH        = 2
+CURSOR_POS_ROUND_TO = 2
+
 DRAW_LINE_WIDTH   = 2
 DRAW_CIRCLE_WIDTH = 2
 
@@ -59,8 +62,8 @@ def snap_to_grid(cell_size, mPos):
     return cell_size * round(mPos[0] / cell_size), cell_size * round(mPos[1] / cell_size)
 
 
-def distance(p1, p2):
-    return ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2) ** 0.5
+def distance(a, b):
+    return ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
 
 
 def draw_all_shapes(lst):
@@ -75,16 +78,22 @@ def draw_all_shapes(lst):
 def draw_line_preview(start, mPos):
      pg.draw.line(MAINSURFACE, GREEN, start, mPos, DRAW_LINE_WIDTH)
 
+     len_gui = DEFAULT_FONT.render(f"len={round(distance(start, mPos), CURSOR_POS_ROUND_TO)}", True, WHITE)
+     MAINSURFACE.blit(len_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
-def draw_circle_preview(center, r):
+
+def draw_circle_preview(center, r, mPos):
     pg.draw.circle(MAINSURFACE, GREEN, center, r, DRAW_CIRCLE_WIDTH)
 
+    radius_gui = DEFAULT_FONT.render(f"r: {round(r, CURSOR_POS_ROUND_TO)}", True, WHITE)
+    MAINSURFACE.blit(radius_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
-def gui(draw_mode):
+
+def gui(draw_mode, mPos):
     if draw_mode == E_TYPE_LINE:
-        draw_mode_gui = DEFAULT_FONT.render(f"DRAW MODE: LINE"             , True, BLACK, WHITE)
+        draw_mode_gui = DEFAULT_FONT.render("DRAW MODE: LINE"              , True, BLACK, WHITE)
     elif draw_mode == E_TYPE_CIRCLE:
-        draw_mode_gui = DEFAULT_FONT.render(f"DRAW MODE: CIRCLE"           , True, BLACK, WHITE)
+        draw_mode_gui = DEFAULT_FONT.render("DRAW MODE: CIRCLE"            , True, BLACK, WHITE)
     switch_line_gui   = DEFAULT_FONT.render('LINE: "L"'                    , True, BLACK, WHITE)
     switch_circle_gui = DEFAULT_FONT.render('CIRCLE: "C"'                  , True, BLACK, WHITE)
     hide_gui_gui      = DEFAULT_FONT.render('HIDE GUI: "H"'                , True, BLACK, WHITE)
@@ -92,6 +101,7 @@ def gui(draw_mode):
     undo_mode_gui     = DEFAULT_FONT.render('UNDO: "RIGHT MOUSE BUTTON"'   , True, BLACK, WHITE)
     clear_gui         = DEFAULT_FONT.render('CLEAR: "MIDDLE MOUSE BUTTON"' , True, BLACK, WHITE)
     exit_gui          = DEFAULT_FONT.render('EXIT: "ESC"'                  , True, BLACK, WHITE)
+    mouse_pos_gui     = DEFAULT_FONT.render(f'CURSOR POS: {mPos}'          , True, BLACK, WHITE)
 
     # TODO Positions are hard-coded
     MAINSURFACE.blit(draw_mode_gui    , (0, 0  ))
@@ -102,6 +112,7 @@ def gui(draw_mode):
     MAINSURFACE.blit(undo_mode_gui    , (0, 500))
     MAINSURFACE.blit(clear_gui        , (0, 600))
     MAINSURFACE.blit(exit_gui         , (0, 700))
+    MAINSURFACE.blit(mouse_pos_gui    , (0, 800))
 # --- End functions ---
 
 
@@ -128,6 +139,8 @@ def main():
     clock = pg.time.Clock()
     
     while 1:
+
+        #print(grid_gap_size, DISPLAY_SIZE)
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 # User exit
@@ -143,10 +156,10 @@ def main():
                 elif event.key == pg.K_UP and grid_gap_size < math.gcd(*DISPLAY_SIZE): # Do not increase cell size larger than max
                     grid_gap_size *= 2
                 elif event.key == pg.K_DOWN:
-                    grid_gap_size //=2
+                    grid_gap_size //= 2
 
                 # Only allow draw mode changes if not in preview mode. Otherwise, stuff messes up.
-                elif not preview: 
+                else: 
                     if event.key == pg.K_l:
                         draw_mode = E_TYPE_LINE
                     elif event.key == pg.K_c:
@@ -217,9 +230,9 @@ def main():
             if draw_mode == E_TYPE_LINE:
                 draw_line_preview(element[0], mousePos)
             elif draw_mode == E_TYPE_CIRCLE:
-                draw_circle_preview(element[0], distance(mousePos, element[0]))
+                draw_circle_preview(element[0], distance(mousePos, element[0]), mousePos)
         if show_gui:
-            gui(draw_mode)
+            gui(draw_mode, mousePos)
         draw_cursor(mousePos)
         # --- End draw functions ---
 
