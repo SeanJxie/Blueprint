@@ -1,6 +1,5 @@
 import pygame as pg
 import sys
-import math
 
 import util
 
@@ -27,6 +26,12 @@ MAINSURFACE    = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 DEFAULT_FONT   = pg.font.SysFont("ariel", 50)
 MAX_FRAME_RATE = 60
 
+# A cell size of 1 or 2 would make the computer not happy :(
+MIN_CELL_SIZE   = 3
+# All levels of zoom are such that the grid evenly divides the display. Therefore, all cell sizes are
+# common multiples of DISPLAY_SIZE dimensions.
+GRID_ZOOM_CYCLE = util.get_all_cd(MIN_CELL_SIZE, *DISPLAY_SIZE)
+
 BLUEPRINT_BLUE = (0  , 20 , 132)
 WHITE          = (255, 255, 255)
 GRAY           = (100, 100, 100)
@@ -50,6 +55,7 @@ E_TYPE_CIRCLE = 1
 def draw_base_grid(cell_size):
     for x in range(cell_size, DISPLAY_SIZE[0], cell_size):
         pg.draw.line(MAINSURFACE, GRAY, (x, 0), (x, DISPLAY_SIZE[1]), 1)
+
     for y in range(cell_size, DISPLAY_SIZE[1], cell_size):
         pg.draw.line(MAINSURFACE, GRAY, (0, y), (DISPLAY_SIZE[0], y), 1)
 
@@ -60,11 +66,6 @@ def draw_cursor(mPos):
 
 def snap_to_grid(cell_size, mPos):
     return cell_size * round(mPos[0] / cell_size), cell_size * round(mPos[1] / cell_size)
-
-
-def distance(a, b):
-    # pixel coordinates must be integers
-    return math.ceil(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
 
 
 def draw_all_shapes(lst):
@@ -79,7 +80,7 @@ def draw_all_shapes(lst):
 def draw_line_preview(start, mPos):
      pg.draw.line(MAINSURFACE, GREEN, start, mPos, DRAW_LINE_WIDTH)
 
-     len_gui = DEFAULT_FONT.render(f"len={round(distance(start, mPos), CURSOR_POS_ROUND_TO)}", True, WHITE)
+     len_gui = DEFAULT_FONT.render(f"len={round(util.distance(start, mPos), CURSOR_POS_ROUND_TO)}", True, WHITE)
      MAINSURFACE.blit(len_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
 
@@ -134,14 +135,12 @@ def main():
     # Default draw mode is line mode
     draw_mode = E_TYPE_LINE
 
-    # math.gcd(*DISPLAY_SIZE) returns largest cell size that fits neatly on display
-    grid_gap_size = math.gcd(*DISPLAY_SIZE) 
+    # Start index of zoom cycle
+    grid_zoom_idx = -1
 
     clock = pg.time.Clock()
     
     while 1:
-
-        #print(grid_gap_size, DISPLAY_SIZE)
         for event in pg.event.get():
             if event.type == pg.KEYDOWN:
                 # User exit
@@ -154,10 +153,12 @@ def main():
                     show_gui = not show_gui
 
                 # Increase and decrease cell size
-                elif event.key == pg.K_UP and grid_gap_size < math.gcd(*DISPLAY_SIZE): # Do not increase cell size larger than max
-                    grid_gap_size *= 2  # Scaling by 2 causes some element-grid offset. Fix.
+                elif event.key == pg.K_UP:
+                    grid_zoom_idx = (grid_zoom_idx + 1) % len(GRID_ZOOM_CYCLE)
+
                 elif event.key == pg.K_DOWN:
-                    grid_gap_size //= 2
+                    grid_zoom_idx = (grid_zoom_idx - 1) % len(GRID_ZOOM_CYCLE)
+
 
                 # Only allow draw mode changes if not in preview mode. Otherwise, stuff messes up.
                 else: 
@@ -201,7 +202,7 @@ def main():
 
                         # Similar process to line. Except second data value is a radius.
                         elif len(element) == 1:
-                            element.append(distance(mousePos, element[0]))
+                            element.append(util.distance(mousePos, element[0]))
                             element.append(E_TYPE_CIRCLE)
                             if element not in draw_list:
                                 draw_list.append(element)
@@ -221,17 +222,17 @@ def main():
                     draw_list = [] # Clear 
 
         # Get modified mouse position
-        mousePos = snap_to_grid(grid_gap_size, pg.mouse.get_pos())
+        mousePos = snap_to_grid(GRID_ZOOM_CYCLE[grid_zoom_idx], pg.mouse.get_pos())
 
          # --- Start draw functions ---
         MAINSURFACE.fill(BLUEPRINT_BLUE)
-        draw_base_grid(grid_gap_size)
+        draw_base_grid(GRID_ZOOM_CYCLE[grid_zoom_idx])
         draw_all_shapes(draw_list)
         if preview:
             if draw_mode == E_TYPE_LINE:
                 draw_line_preview(element[0], mousePos)
             elif draw_mode == E_TYPE_CIRCLE:
-                draw_circle_preview(element[0], distance(mousePos, element[0]), mousePos)
+                draw_circle_preview(element[0], util.distance(mousePos, element[0]), mousePos)
         if show_gui:
             gui(draw_mode, mousePos)
         draw_cursor(mousePos)
