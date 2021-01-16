@@ -23,14 +23,12 @@ DISPLAY_SIZE  = util.get_display_size()
 WIN_NAME      = "Blueprint"  # Program operates in fullscreen so...
 
 MAINSURFACE     = pg.display.set_mode((0, 0), pg.FULLSCREEN)
-ACTIVE_GUI_FONT = pg.font.SysFont("ariel", 50)
+ACTIVE_GUI_FONT = pg.font.SysFont("monospace", 50)
 MAX_FRAME_RATE  = 60
 
-# A cell size of 1 or 2 would make the computer not happy :(
-MIN_CELL_SIZE   = 3
 # All levels of zoom are such that the grid evenly divides the display. Therefore, all cell sizes are
 # common multiples of DISPLAY_SIZE dimensions.
-GRID_ZOOM_CYCLE = util.get_all_cd(MIN_CELL_SIZE, *DISPLAY_SIZE)
+GRID_ZOOM_CYCLE = util.get_zoom_cycle(*DISPLAY_SIZE)
 
 BLUEPRINT_BLUE = (0  , 20 , 132)
 WHITE          = (255, 255, 255)
@@ -107,8 +105,8 @@ def active_gui(draw_mode, mPos):
     mouse_pos_gui     = ACTIVE_GUI_FONT.render(f'CURSOR POS: {mPos}'          , True, BLACK, WHITE)
 
     # TODO Positions are hard-coded
-    MAINSURFACE.blit(draw_mode_gui, (0, 0  ))
-    MAINSURFACE.blit(mouse_pos_gui, (0, 33))
+    MAINSURFACE.blit(draw_mode_gui, (0, 0 ))
+    MAINSURFACE.blit(mouse_pos_gui, (0, 50))
 # --- End functions ---
 
 
@@ -119,10 +117,10 @@ def main():
     mousePos = [0, 0]
 
     # GUI vars
-    preview   = False
-    show_menu = True # This statement is scattered around. Defines menu state and active program state.
-    show_gui  = True
-    show_grid = True
+    preview     = False
+    show_menu   = True # This statement is scattered around. Defines menu state and active program state.
+    show_gui    = True
+    show_grid   = True
 
     # Stores all shape data in the form (v1, v2, draw_type)
     draw_list = []
@@ -134,7 +132,7 @@ def main():
     draw_mode = E_TYPE_LINE
 
     # Start index of zoom cycle
-    grid_zoom_idx = -1
+    grid_zoom_idx = 0
 
     clock = pg.time.Clock()
     
@@ -153,13 +151,13 @@ def main():
                 if not show_menu:
                     # Increase and decrease cell size
                     if event.key == pg.K_UP:
-                        grid_zoom_idx = (grid_zoom_idx + 1) % len(GRID_ZOOM_CYCLE)
-
-                    elif event.key == pg.K_f:
-                        show_gui = not show_gui
+                        grid_zoom_idx = (grid_zoom_idx - 1) % len(GRID_ZOOM_CYCLE)
 
                     elif event.key == pg.K_DOWN:
-                        grid_zoom_idx = (grid_zoom_idx - 1) % len(GRID_ZOOM_CYCLE)
+                        grid_zoom_idx = (grid_zoom_idx + 1) % len(GRID_ZOOM_CYCLE)
+                    
+                    elif event.key == pg.K_f:
+                        show_gui = not show_gui
 
                     elif event.key == pg.K_l:
                         draw_mode = E_TYPE_LINE
@@ -169,7 +167,8 @@ def main():
 
                     elif event.key == pg.K_g:
                         show_grid = not show_grid
-                
+
+
             # User presses mouse button
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if not show_menu:

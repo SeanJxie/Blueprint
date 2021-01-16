@@ -11,11 +11,14 @@ def distance(a, b):
     return math.ceil(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
 
 
-def get_all_cd(min_cd, a, b):
+def get_zoom_cycle(a, b):
     """Get all common denominators of a and b"""
-    cd = []
-    for i in range(min_cd, min(a, b)):
-        if a % i == 0 and b % i == 0:
-            cd.append(i)
+    zc = []
+    d = 1
 
-    return cd
+    while a % d == 0:
+        if a // d <= math.gcd(a, b):
+            zc.append(a // d)
+        d *= 2
+
+    return zc
