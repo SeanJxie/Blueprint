@@ -3,6 +3,8 @@
 A simple shape construction program made with the Python pygame library.
 - In development.
 
+# New
+- Bezier curves.
 
 # Run
 
