@@ -8,7 +8,7 @@ A simple shape construction program made with the Python pygame library.
 
 # Run
 
-To run the program as an executable, [download](https://github.com/SeanJxie/Blueprint/releases/download/v1.1/PythonBlueprint.zip) `PyBlueprint.zip` in releases, unzip, then find and run the `PythonBlueprint.exe` application.
+To run the program as an executable, [download](https://github.com/SeanJxie/Blueprint/releases/download/v1.1/PyBlueprint.zip) `PyBlueprint.zip` in releases, unzip, then find and run the `PythonBlueprint.exe` application.
 
 # Examples
 ![example](https://github.com/SeanJxie/Blueprint/blob/main/images/example.png)
