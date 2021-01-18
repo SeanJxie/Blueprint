@@ -4,7 +4,7 @@ A simple shape construction program made with the pygame library.
 
 # Run
 
-[Download](https://github.com/SeanJxie/Blueprint/releases/download/v1.0/PythonBlueprint.zip) PythonBlueprint.zip in releases. Unzip, then find and run the PythonBlueprint application.
+[Download](https://github.com/SeanJxie/Blueprint/releases/download/v1.0/PythonBlueprint.zip) `PythonBlueprint.zip` in releases. Unzip, then find and run the PythonBlueprint application.
 
 # Examples
 ![example](https://github.com/SeanJxie/Blueprint/blob/main/images/example.png)
