@@ -1,6 +1,6 @@
 # Blueprint
 
-A simple shape construction program made with the pygame library.
+A simple shape construction program made with the Python pygame library.
 
 # Run
 
