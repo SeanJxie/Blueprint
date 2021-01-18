@@ -1,4 +1,5 @@
 import pygame as pg
+from pygame import gfxdraw  # For antialias functions and more precise draw functions overall.
 import sys, os
 import math
 
@@ -46,6 +47,7 @@ DRAW_CIRCLE_WIDTH = 2
 
 E_TYPE_LINE   = 0
 E_TYPE_CIRCLE = 1
+E_TYPE_ARC    = 2
 # --- End constants ---
 
 
@@ -59,7 +61,7 @@ def draw_base_grid(cell_size):
 
 
 def draw_cursor(mPos):
-    pg.draw.circle(MAINSURFACE, RED, mPos, CURSOR_RAD, CURSOR_WIDTH)
+    pg.gfxdraw.aacircle(MAINSURFACE, *mPos, CURSOR_RAD, RED)
 
 
 def snap_to_grid(cell_size, mPos):
@@ -70,23 +72,27 @@ def draw_all_shapes(lst):
     for shape in lst:
         shape_type = shape[2]
         if shape_type == E_TYPE_LINE:
-            pg.draw.line(MAINSURFACE, WHITE, shape[0], shape[1], DRAW_LINE_WIDTH)
+            pg.gfxdraw.line(MAINSURFACE, *shape[0], *shape[1], WHITE)
         elif shape_type == E_TYPE_CIRCLE:
-            pg.draw.circle(MAINSURFACE, WHITE, shape[0], math.ceil(shape[1]), DRAW_CIRCLE_WIDTH)
+            pg.gfxdraw.aacircle(MAINSURFACE, *shape[0], shape[1], WHITE)
 
 
 def draw_line_preview(start, mPos):
-     pg.draw.line(MAINSURFACE, GREEN, start, mPos, DRAW_LINE_WIDTH)
+     pg.gfxdraw.line(MAINSURFACE, *start, *mPos, GREEN)
 
      len_gui = ACTIVE_GUI_FONT.render(f"len={round(util.distance(start, mPos), CURSOR_POS_ROUND_TO)}", True, WHITE)
      MAINSURFACE.blit(len_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
 
 def draw_circle_preview(center, r, mPos):
-    pg.draw.circle(MAINSURFACE, GREEN, center, r, DRAW_CIRCLE_WIDTH)
+    pg.gfxdraw.aacircle(MAINSURFACE, *center, r, GREEN)
 
     radius_gui = ACTIVE_GUI_FONT.render(f"r={round(r, CURSOR_POS_ROUND_TO)}", True, WHITE)
     MAINSURFACE.blit(radius_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
+
+
+def draw_arc_preview(center, r, sDeg, mPos):
+    pass
 
 
 def menu_gui():

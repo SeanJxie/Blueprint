@@ -8,7 +8,7 @@ def get_display_size():
 
 def distance(a, b):
     """Custon integer-based distance function"""
-    return math.ceil(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
+    return int(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
 
 #1002.3971
 def get_zoom_cycle(a, b):
