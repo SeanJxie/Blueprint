@@ -1,5 +1,6 @@
 import pygame as pg
-import sys
+import sys, os
+import math
 
 import util
 
@@ -7,11 +8,7 @@ import util
 
 A shape constructor
 
-TODO: Navigation
-      Elements to clases
-      Fix hard coded gui value
 """
-
 
 # Initialize systems
 pg.init()
@@ -21,6 +18,9 @@ pg.font.init()
 # --- Start constants ---
 DISPLAY_SIZE  = util.get_display_size()
 WIN_NAME      = "Blueprint"  # Program operates in fullscreen so...
+
+# This is one way to do it...
+ASSET_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "menu_img.PNG")
 
 MAINSURFACE     = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 ACTIVE_GUI_FONT = pg.font.SysFont("monospace", 50)
@@ -39,7 +39,7 @@ BLACK          = (0  , 0  , 0  )
 
 CURSOR_RAD          = 10
 CURSOR_WIDTH        = 2
-CURSOR_POS_ROUND_TO = 2
+CURSOR_POS_ROUND_TO = 4
 
 DRAW_LINE_WIDTH   = 2
 DRAW_CIRCLE_WIDTH = 2
@@ -72,7 +72,7 @@ def draw_all_shapes(lst):
         if shape_type == E_TYPE_LINE:
             pg.draw.line(MAINSURFACE, WHITE, shape[0], shape[1], DRAW_LINE_WIDTH)
         elif shape_type == E_TYPE_CIRCLE:
-            pg.draw.circle(MAINSURFACE, WHITE, shape[0], shape[1], DRAW_CIRCLE_WIDTH)
+            pg.draw.circle(MAINSURFACE, WHITE, shape[0], math.ceil(shape[1]), DRAW_CIRCLE_WIDTH)
 
 
 def draw_line_preview(start, mPos):
@@ -85,12 +85,13 @@ def draw_line_preview(start, mPos):
 def draw_circle_preview(center, r, mPos):
     pg.draw.circle(MAINSURFACE, GREEN, center, r, DRAW_CIRCLE_WIDTH)
 
-    radius_gui = ACTIVE_GUI_FONT.render(f"r: {round(r, CURSOR_POS_ROUND_TO)}", True, WHITE)
+    radius_gui = ACTIVE_GUI_FONT.render(f"r={round(r, CURSOR_POS_ROUND_TO)}", True, WHITE)
     MAINSURFACE.blit(radius_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
 
 def menu_gui():
-    menu_img = pg.image.load("../assets/menu_img.png")
+    print(ASSET_PATH)
+    menu_img = pg.image.load(ASSET_PATH)
     menu_img = pg.transform.scale(menu_img, DISPLAY_SIZE)
     MAINSURFACE.fill(WHITE)
     MAINSURFACE.blit(menu_img, (0, 0))
@@ -98,11 +99,11 @@ def menu_gui():
 
 def active_gui(draw_mode, mPos):
     if draw_mode == E_TYPE_LINE:
-        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: LINE"              , True, RED, WHITE)
+        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: LINE"  , True, RED, WHITE)
     elif draw_mode == E_TYPE_CIRCLE:
-        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: CIRCLE"            , True, RED, WHITE)
+        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: CIRCLE", True, RED, WHITE)
 
-    mouse_pos_gui     = ACTIVE_GUI_FONT.render(f'CURSOR POS: {mPos}'          , True, BLACK, WHITE)
+    mouse_pos_gui     = ACTIVE_GUI_FONT.render(f"{mPos}"          , True, BLACK, WHITE)
 
     # TODO Positions are hard-coded
     MAINSURFACE.blit(draw_mode_gui, (0, 0 ))
@@ -138,6 +139,10 @@ def main():
     
     while 1:
         for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.display.quit()
+                sys.exit(0)
+
             if event.type == pg.KEYDOWN:
                 # User exit
                 if event.key == pg.K_ESCAPE:
@@ -147,6 +152,8 @@ def main():
                 # Toggle gui
                 elif event.key == pg.K_m:
                     show_menu = not show_menu
+                    # Mouse visibility depends on show_menu
+                    pg.mouse.set_visible(show_menu)
 
                 if not show_menu:
                     # Increase and decrease cell size
@@ -167,7 +174,7 @@ def main():
 
                     elif event.key == pg.K_g:
                         show_grid = not show_grid
-
+    
 
             # User presses mouse button
             elif event.type == pg.MOUSEBUTTONDOWN:
@@ -254,8 +261,7 @@ def main():
         # Update display
         pg.display.update()
 
-        # No mouse
-        pg.mouse.set_visible(False)
+        
 
         # Tick
         clock.tick(MAX_FRAME_RATE)
