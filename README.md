@@ -1,6 +1,7 @@
 # Blueprint
 
 A simple shape construction program made with the Python pygame library.
+- In development
 
 
 # Run
