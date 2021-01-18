@@ -10,7 +10,7 @@ def distance(a, b):
     """Custon integer-based distance function"""
     return int(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
 
-#1002.3971
+
 def get_zoom_cycle(a, b):
     """Get all common denominators of a and b"""
     zc = []
@@ -22,3 +22,7 @@ def get_zoom_cycle(a, b):
         d *= 2
 
     return zc
+
+
+def scale_coord(c, s):
+    return [c[i] * s[i] for i in range(2)]

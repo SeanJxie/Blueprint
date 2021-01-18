@@ -11,6 +11,7 @@ A shape constructor
 
 """
 
+
 # Initialize systems
 pg.init()
 pg.font.init()
@@ -20,12 +21,12 @@ pg.font.init()
 DISPLAY_SIZE  = util.get_display_size()
 WIN_NAME      = "Blueprint"  # Program operates in fullscreen so...
 
-# This is one way to do it...
 ASSET_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "menu_img.PNG")
+MENU_TEXTURE = pg.transform.scale(pg.image.load(ASSET_PATH), DISPLAY_SIZE)
 
 MAINSURFACE     = pg.display.set_mode((0, 0), pg.FULLSCREEN)
 ACTIVE_GUI_FONT = pg.font.SysFont("monospace", 50)
-MAX_FRAME_RATE  = 60
+MAX_FRAME_RATE  = 120
 
 # All levels of zoom are such that the grid evenly divides the display. Therefore, all cell sizes are
 # common multiples of DISPLAY_SIZE dimensions.
@@ -47,7 +48,6 @@ DRAW_CIRCLE_WIDTH = 2
 
 E_TYPE_LINE   = 0
 E_TYPE_CIRCLE = 1
-E_TYPE_ARC    = 2
 # --- End constants ---
 
 
@@ -68,12 +68,13 @@ def snap_to_grid(cell_size, mPos):
     return cell_size * round(mPos[0] / cell_size), cell_size * round(mPos[1] / cell_size)
 
 
+
 def draw_all_shapes(lst):
     for shape in lst:
         shape_type = shape[2]
         if shape_type == E_TYPE_LINE:
             pg.gfxdraw.line(MAINSURFACE, *shape[0], *shape[1], WHITE)
-        elif shape_type == E_TYPE_CIRCLE:
+        elif shape_type == E_TYPE_CIRCLE: 
             pg.gfxdraw.aacircle(MAINSURFACE, *shape[0], shape[1], WHITE)
 
 
@@ -91,16 +92,8 @@ def draw_circle_preview(center, r, mPos):
     MAINSURFACE.blit(radius_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
 
 
-def draw_arc_preview(center, r, sDeg, mPos):
-    pass
-
-
 def menu_gui():
-    print(ASSET_PATH)
-    menu_img = pg.image.load(ASSET_PATH)
-    menu_img = pg.transform.scale(menu_img, DISPLAY_SIZE)
-    MAINSURFACE.fill(WHITE)
-    MAINSURFACE.blit(menu_img, (0, 0))
+    MAINSURFACE.blit(MENU_TEXTURE, (0, 0))
 
 
 def active_gui(draw_mode, mPos):
@@ -125,9 +118,10 @@ def main():
 
     # GUI vars
     preview     = False
-    show_menu   = True # This statement is scattered around. Defines menu state and active program state.
+    show_menu   = True  # This statement is scattered around. Defines menu state and active program state.
     show_gui    = True
     show_grid   = True
+    show_cursor = True
 
     # Stores all shape data in the form (v1, v2, draw_type)
     draw_list = []
@@ -155,12 +149,14 @@ def main():
                     pg.display.quit()
                     sys.exit(0)
 
-                # Toggle gui
+                # Only toggle that operates both in and out of menu is the menu toggle
                 elif event.key == pg.K_m:
                     show_menu = not show_menu
-                    # Mouse visibility depends on show_menu
+
+                    # Mouse visibility depends on menu state
                     pg.mouse.set_visible(show_menu)
 
+                # All the controls that do not function in when in menu
                 if not show_menu:
                     # Increase and decrease cell size
                     if event.key == pg.K_UP:
@@ -169,18 +165,24 @@ def main():
                     elif event.key == pg.K_DOWN:
                         grid_zoom_idx = (grid_zoom_idx + 1) % len(GRID_ZOOM_CYCLE)
                     
+                    # Toggle controls
                     elif event.key == pg.K_f:
                         show_gui = not show_gui
 
+                    elif event.key == pg.K_g:
+                        show_grid = not show_grid
+
+                    elif event.key == pg.K_x:
+                        show_cursor = not show_cursor
+
+                    # Draw mode controls
                     elif event.key == pg.K_l:
                         draw_mode = E_TYPE_LINE
                         
                     elif event.key == pg.K_c:
                         draw_mode = E_TYPE_CIRCLE
 
-                    elif event.key == pg.K_g:
-                        show_grid = not show_grid
-    
+                    
 
             # User presses mouse button
             elif event.type == pg.MOUSEBUTTONDOWN:
@@ -258,7 +260,8 @@ def main():
             if show_gui:
                 active_gui(draw_mode, mousePos)
 
-            draw_cursor(mousePos)
+            if show_cursor:
+                draw_cursor(mousePos)
 
         else:
             menu_gui()
