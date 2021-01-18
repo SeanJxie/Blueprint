@@ -8,11 +8,11 @@ def get_display_size():
 
 def distance(a, b):
     """Custon integer-based distance function"""
-    return int(((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5)
+    return ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
 
 
 def get_zoom_cycle(a, b):
-    """Get all common denominators of a and b"""
+    """Generate the valid values of cell size"""
     zc = []
     d = 1
 
@@ -24,5 +24,5 @@ def get_zoom_cycle(a, b):
     return zc
 
 
-def scale_coord(c, s):
-    return [c[i] * s[i] for i in range(2)]
+#def scale_coord(c, s):
+#    return [c[i] * s[i] for i in range(2)]
