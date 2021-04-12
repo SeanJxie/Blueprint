@@ -1,5 +1,5 @@
 import pygame as pg
-from pygame import gfxdraw  # For antialias functions and more precise draw functions overall.
+from pygame import gfxdraw  # More functions but experimental. gfxdraw.aacircle does not work for large rads for example.
 import sys, os
 import math
 
@@ -9,11 +9,6 @@ import util
 
 A shape constructor
 
---- New ---
-- Resolution-based font size
-- float values for length and radius
-- Small font type
-- Bezier curves
 
 """
 
@@ -53,8 +48,9 @@ CURSOR_POS_ROUND_TO = 4
 
 # With the new gfx functions, no width args
 #DRAW_LINE_WIDTH    = 2
-#DRAW_CIRCLE_WIDTH  = 2
-BEZIER_INTERP_STEPS = 10
+DRAW_CIRCLE_WIDTH   = 1
+BEZIER_INTERP_STEPS = 50
+BEZIER_POINT_RAD    = 2
 
 E_TYPE_LINE   = 0
 E_TYPE_CIRCLE = 1
@@ -82,10 +78,13 @@ def snap_to_grid(cell_size, mPos):
 def draw_all_shapes(lst):
     for shape in lst:
         shape_type = shape[-1]
+        # In line and circle draw call, the first position arg is called in such a strange way because we want to take 
+        # the first and last position of shape arguments such that if we were to switch between line/circle to bezier
+        # in preview mode, the shape of the bezier curve is "memorized".
         if shape_type == E_TYPE_LINE:
-            pg.gfxdraw.line(MAINSURFACE, *shape[0], *shape[1], WHITE)
+            pg.gfxdraw.line(MAINSURFACE, shape[0][0], shape[0][-1], shape[1][0], shape[1][-1], WHITE)
         elif shape_type == E_TYPE_CIRCLE: 
-            pg.gfxdraw.aacircle(MAINSURFACE, *shape[0], int(shape[1]), WHITE)
+            pg.draw.circle(MAINSURFACE, WHITE, (shape[0][0], shape[0][-1]), shape[1], DRAW_CIRCLE_WIDTH) # gfx.draw.circle is buggy
         elif shape_type == E_TYPE_BEZIER:
             # shape[:-1] specifies all points, excluding shape type
             pg.gfxdraw.bezier(MAINSURFACE, shape[:-1], BEZIER_INTERP_STEPS, WHITE)
@@ -99,7 +98,7 @@ def draw_line_preview(start, mPos):
 
 
 def draw_circle_preview(center, r, mPos):
-    pg.draw.circle(MAINSURFACE, GREEN, center, int(r), 1)
+    pg.draw.circle(MAINSURFACE, GREEN, center, r, DRAW_CIRCLE_WIDTH)  # gfx.draw.circle is buggy
 
     radius_gui = ACTIVE_GUI_FONT.render(f"r={round(r, CURSOR_POS_ROUND_TO)}", True, WHITE)
     MAINSURFACE.blit(radius_gui, (mPos[0] + CURSOR_RAD, mPos[1]))
@@ -108,17 +107,15 @@ def draw_circle_preview(center, r, mPos):
 def draw_bezier_preview(pLst, mPos):
     # Draw points
     for i in range(len(pLst)):
-        pg.gfxdraw.filled_circle(MAINSURFACE, pLst[i][0], pLst[i][1], CURSOR_RAD, YELLOW)
+        pg.gfxdraw.filled_circle(MAINSURFACE, pLst[i][0], pLst[i][1], BEZIER_POINT_RAD, YELLOW)
         p_gui = SMALL_GUI_FONT.render(f"Point #{i + 1} {pLst[i]}", True, YELLOW)
         MAINSURFACE.blit(p_gui, (pLst[i][0] + CURSOR_RAD, pLst[i][1]))
-    
-    # If greater than or equal to 2 points, draw line.
-    if len(pLst) >= 2:
-        pg.draw.lines(MAINSURFACE, YELLOW, False, pLst + [mPos])
+        
+    pg.draw.lines(MAINSURFACE, YELLOW, False, list(pLst) + [mPos])
 
     # If greater than or equal to 3 points, draw bezier.
-    if len(pLst) >= 3:
-        pg.gfxdraw.bezier(MAINSURFACE, pLst + [mPos], BEZIER_INTERP_STEPS, GREEN)
+    if len(pLst) >= 2:
+        pg.gfxdraw.bezier(MAINSURFACE, list(pLst) + [mPos], BEZIER_INTERP_STEPS, GREEN)
 
 
 def menu_gui():
@@ -127,9 +124,9 @@ def menu_gui():
 
 def active_gui(draw_mode, mPos):
     if draw_mode == E_TYPE_LINE:
-        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: LINE"        , True, RED, WHITE)
+        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: LINE        ", True, RED, WHITE)
     elif draw_mode == E_TYPE_CIRCLE:
-        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: CIRCLE"      , True, RED, WHITE)
+        draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: CIRCLE      ", True, RED, WHITE)
     elif draw_mode == E_TYPE_BEZIER:
         draw_mode_gui = ACTIVE_GUI_FONT.render("DRAW MODE: BÉZIER CURVE", True, RED, WHITE)
 
@@ -158,9 +155,9 @@ def main():
     draw_list = []
 
     # Stores a drawable element data
-    # E_TYPE_LINE:   (start, end, type)
-    # E_TYPE_CIRCLE: (center, radius, type)
-    # E_TYPE_BEZIER: (*points, type)
+    # E_TYPE_LINE:   (start, end, type)      add point on click
+    # E_TYPE_CIRCLE: (center, radius, type)  add point on click
+    # E_TYPE_BEZIER: (*points, type)         add point on click
     element = []
 
     # ACTIVE_GUI draw mode is line mode
@@ -177,6 +174,7 @@ def main():
                 pg.display.quit()
                 sys.exit(0)
 
+            # --- User presses key ---
             if event.type == pg.KEYDOWN:
                 # User exit
                 if event.key == pg.K_ESCAPE:
@@ -211,18 +209,26 @@ def main():
 
                     # Draw mode controls
                     elif event.key == pg.K_l:
-                        element = element[:1] # Since 
+                        if draw_mode == E_TYPE_BEZIER:
+                            try:
+                                element = [element[0]] # When switching from bezier mode while in the process of drawing a bezier, reset element with first point only.
+                            except IndexError: # In the case that we have just left bezier mode and want to swap to line mode.
+                                element = []
                         draw_mode = E_TYPE_LINE
                         
-                    elif event.key == pg.K_c:
-                        element = element[:1]
+                    elif event.key == pg.K_c: 
+                        if draw_mode == E_TYPE_BEZIER:
+                            try:
+                                element = [element[0]] # When switching from bezier mode while in the process of drawing a bezier, reset element with first point only.
+                            except IndexError: # In the case that we have just left bezier mode and want to swap to circle mode.
+                                element = []
                         draw_mode = E_TYPE_CIRCLE
 
                     elif event.key == pg.K_b:
                         draw_mode = E_TYPE_BEZIER
-                    
+                
 
-            # User presses mouse button
+            # --- User presses mouse button ---
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if not show_menu:
                     button = pg.mouse.get_pressed() # Returns (middle, right, left) boolean tuple
@@ -266,20 +272,33 @@ def main():
                                 element = []
 
                         elif draw_mode == E_TYPE_BEZIER:
-                            element.append(mousePos)
-                            # We need at least 3 points to draw to curve.
-                            if len(element) == 1:
+
+                            # Need one or more element to check for double click
+                            if len(element) >= 1 and mousePos == element[-1]: # Double click
+
+                                # Need 3 or more elements to render a bezier
+                                if len(element) >= 3:
+                                    element.append(E_TYPE_BEZIER)
+                                    draw_list.append(element)
+                                    preview = False
+                                    element = []
+
+                                # Otherwise, just reset with no addition to draw list
+                                else:
+                                    preview = False
+                                    element = []
+
+                            else: # If no double click encountered, keep adding to point list
+                                element.append(mousePos)
+
+                            # As long as one point is in the list, we can preview the drawing. 
+                            # Not necessarily the bezier itself. Just the lines.
+                            if len(element) == 1: 
                                 preview = True
-
-                            # element[-1] == element[-2] detects double click. If so, curve has been defined.
-                            if len(element) >= 3 and element[-1] == element[-2]:
-                                draw_list.append(element)
-                                element.append(E_TYPE_BEZIER)
-                                preview = False
-                                element = []
-
+                                
 
                     elif button[2]: # Right
+
                         if preview:          # If in preview mode
                             preview = False  # Exit preview
                             element = []     # Reset element
@@ -290,8 +309,8 @@ def main():
                     elif button[1]: # Middle 
                         draw_list = [] # Clear 
 
+ 
         if not show_menu:
-            # Get modified mouse position
             mousePos = snap_to_grid(GRID_ZOOM_CYCLE[grid_zoom_idx], pg.mouse.get_pos())
 
             # --- Start draw functions ---
@@ -323,8 +342,6 @@ def main():
 
         # Update display
         pg.display.update()
-
-        
 
         # Tick
         clock.tick(MAX_FRAME_RATE)

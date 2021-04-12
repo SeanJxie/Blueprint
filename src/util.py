@@ -1,5 +1,6 @@
 from tkinter import Tk
 import math
+import os
 
 def get_display_size():
     root = Tk()
@@ -22,6 +23,15 @@ def get_zoom_cycle(a, b):
         d *= 2
 
     return zc
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS  # May not exist
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 
 
 #def scale_coord(c, s):
